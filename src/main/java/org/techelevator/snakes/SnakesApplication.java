@@ -1,6 +1,5 @@
 package org.techelevator.snakes;
 
-import java.util.*;
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
 import javafx.event.EventHandler;
@@ -14,7 +13,7 @@ import javafx.stage.Stage;
 import java.io.IOException;
 
 /**
- * A simple class to represent a point in 2D space
+ * The main application class for the Snakes game
  */
 public class SnakesApplication extends Application {
     // ----------------------------------------------
@@ -23,37 +22,22 @@ public class SnakesApplication extends Application {
     /**
      * The number of frames per second
      */
-    private final static int FRAMES_PER_SECOND = 30;
+    private final static int FRAMES_PER_SECOND = 60;
 
     /**
-     * UP direction
-     */
-    private final static int DIRECTION_UP = 0;
-
-    /**
-     * DOWN direction
-     */
-    private final static int DIRECTION_DOWN = 1;
-
-    /**
-     * LEFT direction
-     */
-    private final static int DIRECTION_LEFT = 2;
-
-    /**
-     * RIGHT direction
-     */
-    private final static int DIRECTION_RIGHT = 3;
-
-    /**
-     * Title screen
+     * The title screen
      */
     private final static int SCREEN_TITLE = 0;
 
     /**
-     * Game screen
+     * The game screen
      */
     private final static int SCREEN_GAME = 1;
+
+    /**
+     * The game over screen
+     */
+    private final static int SCREEN_GAME_OVER = 2;
 
     // ----------------------------------------------
     // GRAPHICS CONTEXT
@@ -70,18 +54,22 @@ public class SnakesApplication extends Application {
      * Whether the up key is currently pressed
      */
     private boolean keydown_up = false;
+
     /**
      * Whether the down key is currently pressed
      */
     private boolean keydown_down = false;
+
     /**
      * Whether the left key is currently pressed
      */
     private boolean keydown_left = false;
+
     /**
      * Whether the right key is currently pressed
      */
     private boolean keydown_right = false;
+
     /**
      * Whether the space key is currently pressed
      */
@@ -91,21 +79,34 @@ public class SnakesApplication extends Application {
     // GAME STATE
     // ----------------------------------------------
     /**
-     * The current screen
+     * The snake
      */
-    private int screen = SCREEN_TITLE;
+    private Snake snake = new Snake();
+
     /**
-     * The snake (a list of points)
+     * The apple
      */
-    private List<Point> snake = new ArrayList<>();
+    private Apple apple = new Apple();
+
     /**
-     * The current direction of the snake
+     * The speed of the game
      */
-    private int direction = DIRECTION_DOWN;
+    private int speed = 3;
+
     /**
-     * The apple (a single point)
+     * The change in speed to apply
      */
-    private Point apple = new Point(5, 5);
+    private int speedChange = 0;
+
+    /**
+     * The currently active screen
+     */
+    private int currentScreen = SCREEN_TITLE;
+
+    /**
+     * The frame number when the game over screen was activated
+     */
+    private long gameOverFrame = 0;
 
     // ----------------------------------------------
     // GAME BOILERPLATE
@@ -130,7 +131,6 @@ public class SnakesApplication extends Application {
      */
     @Override
     public void start(Stage stage) throws IOException {
-        initialize();
         stage.setTitle("SNAKES!!!");
         stage.setResizable(false);
         Pane root = new Pane();
@@ -211,16 +211,6 @@ public class SnakesApplication extends Application {
     // (Update and then Draw are called repeatedly 30
     // times per second)
     // ----------------------------------------------
-    /**
-     * Initialize the game state
-     */
-    public void initialize(){
-        snake.clear();
-        snake.add(new Point(0, 0));
-
-        direction= DIRECTION_DOWN;
-        placeApple();
-    }
 
     /**
      * Update the game state
@@ -228,63 +218,55 @@ public class SnakesApplication extends Application {
      * @param currentFrame the current frame number
      */
     public void update(long currentFrame) {
-        if (screen == SCREEN_GAME) {
-            Point snakeHead = snake.get(0);
-
-            // Update direction if needed
-            if (keydown_up && direction != DIRECTION_DOWN) {
-                direction = DIRECTION_UP;
-            } else if (keydown_down && direction != DIRECTION_UP) {
-                direction = DIRECTION_DOWN;
-            } else if (keydown_left && direction != DIRECTION_RIGHT) {
-                direction = DIRECTION_LEFT;
-            } else if (keydown_right && direction != DIRECTION_LEFT) {
-                direction = DIRECTION_RIGHT;
+        if (currentScreen == SCREEN_GAME) {
+            if (keydown_up) {
+                snake.setDirectionUp();
+            }
+            if (keydown_down) {
+                snake.setDirectionDown();
+            }
+            if (keydown_left) {
+                snake.setDirectionLeft();
+            }
+            if (keydown_right) {
+                snake.setDirectionRight();
             }
 
-            // Update snake positions
-            if (currentFrame % 2 == 0) {
-                Point tail = snake.get(snake.size() - 1);
-                Point newSegment = new Point(tail);
+            if (currentFrame % (6 - speed) == 0) {
+                boolean shouldGrow = false;
 
-                // Move all the snake parts besides the head to the position of the part in front of it
-                // Starting at the tail and going forward
-                for (int i = snake.size() - 1; i > 0; i--) {
-                    snake.get(i).setX(snake.get(i - 1).getX());
-                    snake.get(i).setY(snake.get(i - 1).getY());
+                if (snake.getHead().equals(apple)) {
+                    apple.moveToRandomLocation();
+                    shouldGrow = true;
                 }
-                if (direction == DIRECTION_DOWN) {
-                    snakeHead.move(0, 1);
-                } else if (direction == DIRECTION_UP) {
-                    snakeHead.move(0, -1);
-                } else if (direction == DIRECTION_LEFT) {
-                    snakeHead.move(-1, 0);
-                } else if (direction == DIRECTION_RIGHT) {
-                    snakeHead.move(1, 0);
-                }
+                snake.move(shouldGrow);
 
-                // Check for collision with edges
-                if (snakeHead.getX() < 0 || snakeHead.getX() > 31 || snakeHead.getY() < 0 || snakeHead.getY() > 31) {
-                    screen = SCREEN_TITLE;
-                }
-
-                // Check for collision with self
-                for (int i = 1; i < snake.size(); i++) {
-                    if (snakeHead.equals(snake.get(i))) {
-                        screen = SCREEN_TITLE;
-                    }
-                }
-
-                // Check for collision with apple
-                if (snakeHead.equals(apple)) {
-                    placeApple();
-                    snake.add(newSegment);
+                if (snake.isDead()) {
+                    gameOverFrame = currentFrame;
+                    currentScreen = SCREEN_GAME_OVER;
                 }
             }
-        } else if (screen == SCREEN_TITLE) {
+        } else if (currentScreen == SCREEN_TITLE) {
+            if (keydown_up && speed < 5) {
+                speedChange = 1;
+            }
+            if (keydown_down && speed > 1) {
+                speedChange = -1;
+            }
+
+            if (currentFrame % 10 == 0) {
+                speed += speedChange;
+                speedChange = 0;
+            }
+
             if (keydown_space) {
-                initialize();
-                screen = SCREEN_GAME;
+                snake = new Snake();
+                apple = new Apple();
+                currentScreen = SCREEN_GAME;
+            }
+        } else if (currentScreen == SCREEN_GAME_OVER) {
+            if (currentFrame - gameOverFrame == 90) {
+                currentScreen = SCREEN_TITLE;
             }
         }
     }
@@ -297,36 +279,23 @@ public class SnakesApplication extends Application {
     public void draw(long currentFrame) {
         ctx.clearRect(0, 0, 800, 800);
 
-        if (screen == SCREEN_GAME) {
-            // Draw apple
+        if (currentScreen == SCREEN_GAME) {
+            apple.draw(ctx, currentFrame);
+            snake.draw(ctx, currentFrame);
+            ctx.setFill(Color.WHITE);
+            ctx.fillText("Score: " + snake.getLength(), 700, 12);
+        } else if (currentScreen == SCREEN_TITLE) {
+            ctx.setFill(Color.GREEN);
+            ctx.fillText("Welcome to Snakes!", 300, 200);
+            ctx.setFill(Color.YELLOW);
+            ctx.fillText("Speed (press UP/DOWN to adjust): " + speed, 300, 300);
+            ctx.setFill(Color.WHITE);
+            ctx.fillText("Press SPACE to start", 300, 400);
+        } else if (currentScreen == SCREEN_GAME_OVER) {
             ctx.setFill(Color.RED);
-            ctx.fillOval(apple.getX() * 25, apple.getY() * 25, 25, 25);
-
-            // Draw snake
-            ctx.setFill(Color.GREEN);
-            for (Point p : snake) {
-                ctx.fillRect(p.getX() * 25, p.getY() * 25, 25, 25);
-            }
-
-            // Draw snake head (again)
-            ctx.setFill(Color.DARKGREEN);
-            ctx.fillRect(snake.get(0).getX() * 25, snake.get(0).getY() * 25, 25, 25);
-
+            ctx.fillText("GAME OVER", 300, 200);
             ctx.setFill(Color.WHITE);
-            ctx.fillText("Score: " + (snake.size()), 700, 12);
-        } else if (screen == SCREEN_TITLE) {
-            ctx.setFill(Color.GREEN);
-            ctx.fillText("SNAKE GAME", 300, 200);
-            ctx.setFill(Color.WHITE);
-            ctx.fillText("Press SPACE to Start", 300, 400);
+            ctx.fillText("Score: " + snake.getLength(), 700, 12);
         }
-    }
-
-    /**
-     * Place the apple at a random location
-     */
-    private void placeApple()  {
-        Random rand = new Random();
-        apple = new Point(rand.nextInt(30) + 1, rand.nextInt(30) + 1);
     }
 }
