@@ -131,7 +131,7 @@ public class SnakesApplication extends Application {
     @Override
     public void start(Stage stage) throws IOException {
         initialize();
-        stage.setTitle("The Movable Red Rectangle! (Use Arrow Keys to Move)");
+        stage.setTitle("SNAKES!!!");
         stage.setResizable(false);
         Pane root = new Pane();
         Canvas canvas = new Canvas(800, 800);
