@@ -13,31 +13,101 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 
+/**
+ * The main application class for the Snakes game
+ */
 public class SnakesApplication extends Application {
     // ----------------------------------------------
     // CONSTANTS
     // ----------------------------------------------
-    private final static int FRAMES_PER_SECOND = 30;
+    /**
+     * The number of frames per second
+     */
+    private final static int FRAMES_PER_SECOND = 60;
+
+    /**
+     * The title screen
+     */
+    private final static int SCREEN_TITLE = 0;
+
+    /**
+     * The game screen
+     */
+    private final static int SCREEN_GAME = 1;
+
+    /**
+     * The game over screen
+     */
+    private final static int SCREEN_GAME_OVER = 2;
 
     // ----------------------------------------------
     // GRAPHICS CONTEXT
     // ----------------------------------------------
+    /**
+     * The graphics context to draw to
+     */
     private GraphicsContext ctx;
 
     // ----------------------------------------------
     // KEYBOARD STATE
     // ----------------------------------------------
+    /**
+     * Whether the up key is currently pressed
+     */
     private boolean keydown_up = false;
+
+    /**
+     * Whether the down key is currently pressed
+     */
     private boolean keydown_down = false;
+
+    /**
+     * Whether the left key is currently pressed
+     */
     private boolean keydown_left = false;
+
+    /**
+     * Whether the right key is currently pressed
+     */
     private boolean keydown_right = false;
+
+    /**
+     * Whether the space key is currently pressed
+     */
     private boolean keydown_space = false;
 
     // ----------------------------------------------
     // GAME STATE
     // ----------------------------------------------
-    private int squareX = 0;
-    private int squareY = 0;
+    /**
+     * The snake
+     */
+    private Snake snake = new Snake();
+
+    /**
+     * The apple
+     */
+    private Apple apple = new Apple();
+
+    /**
+     * The speed of the game
+     */
+    private int speed = 3;
+
+    /**
+     * The change in speed to apply
+     */
+    private int speedChange = 0;
+
+    /**
+     * The currently active screen
+     */
+    private int currentScreen = SCREEN_TITLE;
+
+    /**
+     * The frame number when the game over screen was activated
+     */
+    private long gameOverFrame = 0;
 
     // ----------------------------------------------
     // GAME BOILERPLATE
@@ -148,17 +218,56 @@ public class SnakesApplication extends Application {
      * @param currentFrame the current frame number
      */
     public void update(long currentFrame) {
-        if (keydown_up && squareY > 0) {
-            squareY -= 5;
-        }
-        if (keydown_down && squareY < 750) {
-            squareY += 5;
-        }
-        if (keydown_left && squareX > 0) {
-            squareX -= 5;
-        }
-        if (keydown_right && squareX < 750) {
-            squareX += 5;
+        if (currentScreen == SCREEN_GAME) {
+            if (keydown_up) {
+                snake.setDirectionUp();
+            }
+            if (keydown_down) {
+                snake.setDirectionDown();
+            }
+            if (keydown_left) {
+                snake.setDirectionLeft();
+            }
+            if (keydown_right) {
+                snake.setDirectionRight();
+            }
+
+            if (currentFrame % (6 - speed) == 0) {
+                boolean shouldGrow = false;
+
+                if (snake.getHead().equals(apple)) {
+                    apple.moveToRandomLocation();
+                    shouldGrow = true;
+                }
+                snake.move(shouldGrow);
+
+                if (snake.isDead()) {
+                    gameOverFrame = currentFrame;
+                    currentScreen = SCREEN_GAME_OVER;
+                }
+            }
+        } else if (currentScreen == SCREEN_TITLE) {
+            if (keydown_up && speed < 5) {
+                speedChange = 1;
+            }
+            if (keydown_down && speed > 1) {
+                speedChange = -1;
+            }
+
+            if (currentFrame % 10 == 0) {
+                speed += speedChange;
+                speedChange = 0;
+            }
+
+            if (keydown_space) {
+                snake = new Snake();
+                apple = new Apple();
+                currentScreen = SCREEN_GAME;
+            }
+        } else if (currentScreen == SCREEN_GAME_OVER) {
+            if (currentFrame - gameOverFrame == 90) {
+                currentScreen = SCREEN_TITLE;
+            }
         }
     }
 
@@ -169,7 +278,24 @@ public class SnakesApplication extends Application {
      */
     public void draw(long currentFrame) {
         ctx.clearRect(0, 0, 800, 800);
-        ctx.setFill(Color.RED);
-        ctx.fillRect(squareX, squareY, 50, 50);
+
+        if (currentScreen == SCREEN_GAME) {
+            apple.draw(ctx, currentFrame);
+            snake.draw(ctx, currentFrame);
+            ctx.setFill(Color.WHITE);
+            ctx.fillText("Score: " + snake.getLength(), 700, 12);
+        } else if (currentScreen == SCREEN_TITLE) {
+            ctx.setFill(Color.GREEN);
+            ctx.fillText("Welcome to Snakes!", 300, 200);
+            ctx.setFill(Color.YELLOW);
+            ctx.fillText("Speed (press UP/DOWN to adjust): " + speed, 300, 300);
+            ctx.setFill(Color.WHITE);
+            ctx.fillText("Press SPACE to start", 300, 400);
+        } else if (currentScreen == SCREEN_GAME_OVER) {
+            ctx.setFill(Color.RED);
+            ctx.fillText("GAME OVER", 300, 200);
+            ctx.setFill(Color.WHITE);
+            ctx.fillText("Score: " + snake.getLength(), 700, 12);
+        }
     }
 }
