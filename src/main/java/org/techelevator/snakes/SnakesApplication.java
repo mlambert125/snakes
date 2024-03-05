@@ -41,7 +41,8 @@ public class SnakesApplication extends Application {
     // GAME STATE
     // ----------------------------------------------
     private List<Point> snake = new ArrayList<>();
-    private int direction = 1;
+    private int direction = DIRECTION_DOWN;
+    private Point apple = new Point(5, 5);
 
     // ----------------------------------------------
     // GAME BOILERPLATE
@@ -151,16 +152,10 @@ public class SnakesApplication extends Application {
      * Initialize the game state
      */
     public void initialize(){
-        snake.add(new Point(0, 9));
-        snake.add(new Point(0, 8));
-        snake.add(new Point(0, 7));
-        snake.add(new Point(0, 6));
-        snake.add(new Point(0, 5));
-        snake.add(new Point(0, 4));
-        snake.add(new Point(0, 3));
-        snake.add(new Point(0, 2));
-        snake.add(new Point(0, 1));
         snake.add(new Point(0, 0));
+
+        Random rand = new Random();
+        apple = new Point(rand.nextInt(32), rand.nextInt(32));
     }
 
     /**
@@ -182,8 +177,11 @@ public class SnakesApplication extends Application {
             direction = DIRECTION_RIGHT;
         }
 
-        // Update snake position
-        if (currentFrame % 5 == 0) {
+        // Update snake positions
+        if (currentFrame % 4 == 0) {
+            Point tail = snake.get(snake.size() - 1);
+            Point newSegment = new Point(tail);
+
             // Move all the snake parts besides the head to the position of the part in front of it
             // Starting at the tail and going forward
             for (int i = snake.size() - 1; i > 0; i--) {
@@ -199,6 +197,15 @@ public class SnakesApplication extends Application {
             } else if (direction == DIRECTION_RIGHT && snakeHead.getX() < 31) {
                 snakeHead.move(1, 0);
             }
+
+            // Check for collision with apple
+            if (snakeHead.equals(apple)) {
+                Random rand = new Random();
+                apple = new Point(rand.nextInt(32), rand.nextInt(32));
+
+                // Add a new part to the snake
+                snake.add(newSegment);
+            }
         }
     }
 
@@ -210,12 +217,19 @@ public class SnakesApplication extends Application {
     public void draw(long currentFrame) {
         ctx.clearRect(0, 0, 800, 800);
 
+        // Draw apple
+        ctx.setFill(Color.RED);
+        ctx.fillOval(apple.getX() * 25, apple.getY() * 25, 25, 25);
+
+        // Draw snake
         ctx.setFill(Color.GREEN);
         for (Point p : snake) {
             ctx.fillRect(p.getX() * 25, p.getY() * 25, 25, 25);
         }
 
-        ctx.setFill(Color.RED);
+        // Draw snake head (again)
+        ctx.setFill(Color.DARKGREEN);
         ctx.fillRect(snake.get(0).getX() * 25, snake.get(0).getY() * 25, 25, 25);
+
     }
 }

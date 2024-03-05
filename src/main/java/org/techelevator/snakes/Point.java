@@ -9,6 +9,11 @@ public class Point {
         this.y = y;
     }
 
+    public Point(Point other) {
+        this.x = other.x;
+        this.y = other.y;
+    }
+
     public int getX() {
         return x;
     }
@@ -28,5 +33,9 @@ public class Point {
     public void move(int dx, int dy) {
         x += dx;
         y += dy;
+    }
+
+    public boolean equals(Point other) {
+        return x == other.x && y == other.y;
     }
 }
