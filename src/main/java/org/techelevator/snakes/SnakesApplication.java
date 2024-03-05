@@ -1,5 +1,6 @@
 package org.techelevator.snakes;
 
+import java.util.*;
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
 import javafx.event.EventHandler;
@@ -10,7 +11,6 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
-
 import java.io.IOException;
 
 public class SnakesApplication extends Application {
@@ -18,6 +18,10 @@ public class SnakesApplication extends Application {
     // CONSTANTS
     // ----------------------------------------------
     private final static int FRAMES_PER_SECOND = 30;
+    private final static int DIRECTION_UP = 0;
+    private final static int DIRECTION_DOWN = 1;
+    private final static int DIRECTION_LEFT = 2;
+    private final static int DIRECTION_RIGHT = 3;
 
     // ----------------------------------------------
     // GRAPHICS CONTEXT
@@ -36,8 +40,8 @@ public class SnakesApplication extends Application {
     // ----------------------------------------------
     // GAME STATE
     // ----------------------------------------------
-    private int squareX = 0;
-    private int squareY = 0;
+    private List<Point> snake = new ArrayList<>();
+    private int direction = 1;
 
     // ----------------------------------------------
     // GAME BOILERPLATE
@@ -62,6 +66,7 @@ public class SnakesApplication extends Application {
      */
     @Override
     public void start(Stage stage) throws IOException {
+        initialize();
         stage.setTitle("The Movable Red Rectangle! (Use Arrow Keys to Move)");
         stage.setResizable(false);
         Pane root = new Pane();
@@ -143,22 +148,57 @@ public class SnakesApplication extends Application {
     // times per second)
     // ----------------------------------------------
     /**
+     * Initialize the game state
+     */
+    public void initialize(){
+        snake.add(new Point(0, 9));
+        snake.add(new Point(0, 8));
+        snake.add(new Point(0, 7));
+        snake.add(new Point(0, 6));
+        snake.add(new Point(0, 5));
+        snake.add(new Point(0, 4));
+        snake.add(new Point(0, 3));
+        snake.add(new Point(0, 2));
+        snake.add(new Point(0, 1));
+        snake.add(new Point(0, 0));
+    }
+
+    /**
      * Update the game state
      *
      * @param currentFrame the current frame number
      */
     public void update(long currentFrame) {
-        if (keydown_up && squareY > 0) {
-            squareY -= 5;
+        Point snakeHead = snake.get(0);
+
+        // Update direction if needed
+        if (keydown_up && direction != DIRECTION_DOWN) {
+            direction = DIRECTION_UP;
+        } else if (keydown_down && direction != DIRECTION_UP) {
+            direction = DIRECTION_DOWN;
+        } else if (keydown_left && direction != DIRECTION_RIGHT) {
+            direction = DIRECTION_LEFT;
+        } else if (keydown_right && direction != DIRECTION_LEFT) {
+            direction = DIRECTION_RIGHT;
         }
-        if (keydown_down && squareY < 750) {
-            squareY += 5;
-        }
-        if (keydown_left && squareX > 0) {
-            squareX -= 5;
-        }
-        if (keydown_right && squareX < 750) {
-            squareX += 5;
+
+        // Update snake position
+        if (currentFrame % 5 == 0) {
+            // Move all the snake parts besides the head to the position of the part in front of it
+            // Starting at the tail and going forward
+            for (int i = snake.size() - 1; i > 0; i--) {
+                snake.get(i).setX(snake.get(i - 1).getX());
+                snake.get(i).setY(snake.get(i - 1).getY());
+            }
+            if (direction == DIRECTION_DOWN && snakeHead.getY() < 31) {
+                snakeHead.move(0, 1);
+            } else if (direction == DIRECTION_UP && snakeHead.getY() > 0) {
+                snakeHead.move(0, -1);
+            } else if (direction == DIRECTION_LEFT && snakeHead.getX() > 0) {
+                snakeHead.move(-1, 0);
+            } else if (direction == DIRECTION_RIGHT && snakeHead.getX() < 31) {
+                snakeHead.move(1, 0);
+            }
         }
     }
 
@@ -169,7 +209,13 @@ public class SnakesApplication extends Application {
      */
     public void draw(long currentFrame) {
         ctx.clearRect(0, 0, 800, 800);
+
+        ctx.setFill(Color.GREEN);
+        for (Point p : snake) {
+            ctx.fillRect(p.getX() * 25, p.getY() * 25, 25, 25);
+        }
+
         ctx.setFill(Color.RED);
-        ctx.fillRect(squareX, squareY, 50, 50);
+        ctx.fillRect(snake.get(0).getX() * 25, snake.get(0).getY() * 25, 25, 25);
     }
 }
