@@ -1,7 +1,6 @@
 package org.techelevator.snakes;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.paint.Color;
-
+import javafx.scene.image.Image;
 import java.util.Random;
 
 /**
@@ -33,7 +32,7 @@ public class Apple extends Point {
      */
     @Override
     public void draw(GraphicsContext ctx, long currentFrame) {
-        ctx.setFill(Color.RED);
-        ctx.fillOval(getX() * 25, getY() * 25, 25, 25);
+        Image apple = new Image("file:apple.png");
+        ctx.drawImage(apple, getX() * 25, getY() * 25, 25, 25);
     }
 }

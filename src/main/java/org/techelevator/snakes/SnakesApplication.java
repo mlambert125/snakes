@@ -6,6 +6,7 @@ import javafx.event.EventHandler;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.image.Image;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
@@ -280,22 +281,19 @@ public class SnakesApplication extends Application {
         ctx.clearRect(0, 0, 800, 800);
 
         if (currentScreen == SCREEN_GAME) {
+            Image background = new Image("file:background.png");
+            ctx.drawImage(background, 0, 0, 800, 800);
             apple.draw(ctx, currentFrame);
             snake.draw(ctx, currentFrame);
             ctx.setFill(Color.WHITE);
             ctx.fillText("Score: " + snake.getLength(), 700, 12);
         } else if (currentScreen == SCREEN_TITLE) {
-            ctx.setFill(Color.GREEN);
-            ctx.fillText("Welcome to Snakes!", 300, 200);
-            ctx.setFill(Color.YELLOW);
-            ctx.fillText("Speed (press UP/DOWN to adjust): " + speed, 300, 300);
-            ctx.setFill(Color.WHITE);
-            ctx.fillText("Press SPACE to start", 300, 400);
+            // load and draw snakes.jpg
+            Image img = new Image("file:snakes.jpg");
+            ctx.drawImage(img, 0, 0, 800, 800);
         } else if (currentScreen == SCREEN_GAME_OVER) {
-            ctx.setFill(Color.RED);
-            ctx.fillText("GAME OVER", 300, 200);
-            ctx.setFill(Color.WHITE);
-            ctx.fillText("Score: " + snake.getLength(), 700, 12);
+            Image img = new Image("file:gameover.jpg");
+            ctx.drawImage(img, 0, 0, 800, 800);
         }
     }
 }
